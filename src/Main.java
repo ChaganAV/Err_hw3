@@ -1,14 +1,39 @@
+import java.io.*;
 import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+
         app();
     }
 
-    private static void app() {
-        inputData();
+    private static void app() throws IOException {
+        Record record = inputData();
+        String filename = record.getLastname()+".txt";
+        File file = new File(filename);
+        if (file.exists()) {
+            try(BufferedWriter bf = new BufferedWriter(new FileWriter(file)) ){
+
+                bf.write(record.toString());
+                bf.newLine();
+            }
+        }else {
+            try(BufferedWriter bf = new BufferedWriter(new FileWriter(file)) ){
+
+                bf.write(record.toString());
+                bf.newLine();
+            }
+        }
     }
-    private static void inputData(){
+    public static void isFileExists(String path) throws FileNotFoundException {
+        File file = new File(path);
+        if(file.exists()){
+            System.out.println("OK");
+        }else{
+            throw new FileNotFoundException("File do not is exist");
+        }
+    }
+    private static Record inputData(){
         Scanner scanner = new Scanner(System.in);
         System.out.println("Введите Фамилия Имя Отчество датарождения номертелефона пол");
         System.out.println("разделенные пробелом");
@@ -21,30 +46,14 @@ public class Main {
         String input = scanner.nextLine();
         String[] arrString = input.split(" ");
         int countData = 6;
+        Record record = new Record();
         try{
             if (arrString.length != countData){
                 throw new CountFalseException();
             }
 
-            for (int i = 0; i < arrString.length; i++) {
-                switch (i) {
-                    case 3:
-                        getBirthdayFormat(arrString[i]);
-                        break;
-                    case 4:
-                        boolean flag = contentDigit(arrString[i]);
-                        if(!flag){
-                            throw new NumberFormatException();
-                        }
-                        break;
-                    case 5:
-                        if(arrString[i]!="f"){
-                            if( arrString[i]!="m"){
-                                throw new GenderException();
-                            }
-                        }
-                }
-            }
+            setRecord(record,arrString);
+            System.out.println(record);
         } catch (CountFalseException ex){
             ex.printStackTrace();
         } catch (FormatBirthdayException e) {
@@ -56,6 +65,50 @@ public class Main {
         } catch (Exception exp){
             exp.printStackTrace();
         }
+        return record;
+    }
+    private static void setRecord(Record record, String[] arrString)
+            throws FormatBirthdayException, GenderException {
+        for (int i = 0; i < arrString.length; i++) {
+            switch (i) {
+                case 0:
+                    record.setLastname(arrString[i]);
+                    break;
+                case 1:
+                    record.setFirstname(arrString[i]);
+                    break;
+                case 2:
+                    record.setSecondname(arrString[i]);
+                    break;
+                case 3:
+                    if(getBirthdayFormat(arrString[i])){
+                        record.setBirthday(arrString[i]);
+                    }
+                    break;
+                case 4:
+                    boolean flag = contentDigit(arrString[i]);
+                    if(!flag){
+                        throw new NumberFormatException();
+                    }else {
+                        record.setPhone(arrString[i]);
+                    }
+                    break;
+                case 5:
+                    if(getGender(arrString[i])){
+                        record.setGender(arrString[i]);
+                    }else {
+                        throw new GenderException();
+                    }
+                    break;
+            }
+        }
+    }
+    private static boolean getGender(String gender) throws GenderException {
+        boolean result = false;
+        if(gender.equals("f") || gender.equals("m")) {
+            return true;
+        }
+        return result;
     }
     private static boolean getBirthdayFormat(String dateIn) throws FormatBirthdayException {
         boolean result = false;
