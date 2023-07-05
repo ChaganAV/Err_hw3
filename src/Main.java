@@ -1,5 +1,8 @@
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
+import java.util.zip.DataFormatException;
 
 public class Main {
     public static void main(String[] args) throws IOException {
@@ -11,11 +14,24 @@ public class Main {
         Record record = inputData();
         String filename = record.getLastname()+".txt";
         File file = new File(filename);
+        String[] strings;
         if (file.exists()) {
-            try(BufferedWriter bf = new BufferedWriter(new FileWriter(file)) ){
+            List<String> list = new ArrayList<>();
+            //InputStreamReader ir = new InputStreamReader(new FileInputStream(file));
+            try(BufferedReader br = new BufferedReader(new FileReader(file))){
+                String line;
+                while ((line = br.readLine())!=null){
+                    list.add(line);
+                }
+            }
 
+            try(BufferedWriter bf = new BufferedWriter(new FileWriter(file)) ){
+                for (String str : list) {
+                    if(str!=null) {
+                        bf.write(str+"\n");
+                    }
+                }
                 bf.write(record.toString());
-                bf.newLine();
             }
         }else {
             try(BufferedWriter bf = new BufferedWriter(new FileWriter(file)) ){
@@ -35,14 +51,8 @@ public class Main {
     }
     private static Record inputData(){
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Введите Фамилия Имя Отчество датарождения номертелефона пол");
-        System.out.println("разделенные пробелом");
-        System.out.println("Формат данных:");
-        System.out.println("фамилия, имя, отчество - строки");
-        System.out.println("дата рождения - строка формата dd.mm.yyyy");
-        System.out.println("номер телефона - целое беззнаковое число");
-        System.out.println("пол - символ латиницей f или m");
-        System.out.println("----------------");
+        View view = new View();
+        view.print();
         String input = scanner.nextLine();
         String[] arrString = input.split(" ");
         int countData = 6;
@@ -68,7 +78,7 @@ public class Main {
         return record;
     }
     private static void setRecord(Record record, String[] arrString)
-            throws FormatBirthdayException, GenderException {
+            throws FormatBirthdayException, GenderException, DataFormatException {
         for (int i = 0; i < arrString.length; i++) {
             switch (i) {
                 case 0:
@@ -110,25 +120,49 @@ public class Main {
         }
         return result;
     }
-    private static boolean getBirthdayFormat(String dateIn) throws FormatBirthdayException {
-        boolean result = false;
+    private static boolean getBirthdayFormat(String dateIn) throws FormatBirthdayException, DataFormatException {
+        boolean result = true;
         String[] periods = dateIn.split(".");
-        for (int i = 0; i < periods.length; i++) {
-            result = contentDigit(periods[i]);
-            if(!result){
-                throw new FormatBirthdayException();
+        if(dateIn.charAt(2)!='.') throw new FormatBirthdayException();
+        if(dateIn.charAt(5)!='.') throw new FormatBirthdayException();
+        String sDay = dateIn.substring(0,2);
+        String sMonth = dateIn.substring(3,5);
+        String sYear = dateIn.substring(6,10);
+        int day,month,year = 0;
+        if(!contentDigit(sDay)) throw new FormatBirthdayException();
+        else{
+            day = Integer.parseInt(sDay);
+        }
+        if(!contentDigit(sMonth)) throw new FormatBirthdayException();
+        else{
+            month = Integer.parseInt(sMonth);
+        }
+        if(!contentDigit(sYear)) throw new FormatBirthdayException();
+        else {
+            year = Integer.parseInt(sYear);
+            if(year==0)throw new DataFormatException();
+        }
+        if(month>12) throw new DataFormatException();
+        if(month<7){
+            if(month!=2) {
+                if (month % 2 == 0 ){
+                    if(day > 30) throw new DataFormatException();
+                }else {
+                    if(day > 31) throw new DataFormatException();
+                }
+            }else{
+                if(day> 28 && year%4!=0){
+                    throw new DataFormatException();
+                }else{
+                    if(day > 29) throw new DataFormatException();
+                }
             }
-            switch (i){
-                case 0:
-                    int day = Integer.parseInt(periods[i]);
-                    if(day > 31){
-                        throw new FormatBirthdayException();
-                    }
-                case 1:
-                    int month = Integer.parseInt(periods[i]);
-                    if(month<1 && month > 12){
-                        throw new FormatBirthdayException();
-                    }
+        }else {
+            if(month %2 != 0){
+                if(day > 30) throw new DataFormatException();
+            }
+            else {
+                if(day > 31) throw new DataFormatException();
             }
         }
         return result;
@@ -140,20 +174,5 @@ public class Main {
             }
         }
         return true;
-    }
-    public static class CountFalseException extends Exception{
-        public CountFalseException(){
-            super("Данные не соответствуют количеству");
-        }
-    }
-    public static class FormatBirthdayException extends Exception{
-        public FormatBirthdayException(){
-            super("Дата рождение не соответствует формату dd.mm.yyyy");
-        }
-    }
-    public static class GenderException extends Exception{
-        public GenderException(){
-            super("Пол не соответствует формату латинской: f или m");
-        }
     }
 }
