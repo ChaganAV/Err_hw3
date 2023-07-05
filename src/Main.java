@@ -17,7 +17,6 @@ public class Main {
         String[] strings;
         if (file.exists()) {
             List<String> list = new ArrayList<>();
-            //InputStreamReader ir = new InputStreamReader(new FileInputStream(file));
             try(BufferedReader br = new BufferedReader(new FileReader(file))){
                 String line;
                 while ((line = br.readLine())!=null){
